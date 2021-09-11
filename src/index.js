@@ -51,10 +51,14 @@ app.patch('/products/:id', async (req, res) => {
     const _id = req.params.id
 
     try {
-        const productToBeUpdated = await Product.findByIdAndUpdate(_id, req.body)
+        /* Without {returnOriginal: false}, productToBeUpdated will give me the old (preupdated) product.
+        Also, without {runValidators: true}, there will be no validation check,
+        e.g. I can set "quantity_for_month" to 0, even though I have set the
+        minimum quantity to 1 in product schema (./models/product) */
+        const productToBeUpdated = await Product.findByIdAndUpdate(_id, req.body, {returnOriginal: false, runValidators: true})
 
         if (!productToBeUpdated) {
-            return res.status(404).send()
+            return res.status(400).send()
         }
 
         res.send(productToBeUpdated)
