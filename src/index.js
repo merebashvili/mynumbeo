@@ -50,6 +50,12 @@ app.get('/products/:id', async (req, res) => {
 app.patch('/products/:id', async (req, res) => {
     const _id = req.params.id
 
+    // TO DO
+    // See if there is a shorter way to validate
+    if (!isValidOperation(req.body)) {
+        return res.status(400).send({ error: 'Invalid updates!' })
+    }
+
     try {
         /* Without {returnOriginal: false}, productToBeUpdated will give me the old (preupdated) product.
         Also, without {runValidators: true}, there will be no validation check,
@@ -66,6 +72,15 @@ app.patch('/products/:id', async (req, res) => {
         res.status(500).send(e)
     }
 })
+
+/* Checks if the property we are trying to update is valid - meaning,
+if it is included inside the product schema (./models/product) I created earlier */
+const isValidOperation = (body) => {
+    const updates = Object.keys(body)
+    const allowedUpdates = ['product', 'price_in_local', 'price_in_usd', 'quantity_for_month']
+    const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
+    return isValidOperation
+}
 
 app.listen(port, () => {
     console.log('Server is up on port ' + port)
