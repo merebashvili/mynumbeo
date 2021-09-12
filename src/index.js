@@ -73,6 +73,22 @@ app.patch('/products/:id', async (req, res) => {
     }
 })
 
+app.delete('/products/:id', async (req, res) => {
+    const _id = req.params.id
+
+    try {
+        const productToBeDeleted = await Product.findByIdAndDelete({_id})
+
+        if (!productToBeDeleted) {
+            return res.status(400).send()
+        }
+
+        res.send(productToBeDeleted)
+    } catch (e) {
+        res.status(500).send(e)
+    }
+})
+
 /* Checks if the property we are trying to update is valid - meaning,
 if it is included inside the product schema (./models/product) I created earlier */
 const isValidOperation = (body) => {
