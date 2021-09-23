@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
-const {Product, Country} = require('../models/product')
+const Product = require('../models/product')
+const Country = require('../models/country')
 
 router.post('/products', async (req, res) => {
     // Whenever we create a new product, it checks if the product country is already created.
@@ -35,24 +36,6 @@ router.get('/products', async (req, res) => {
         const products = await Product.find({})
         res.send(products)
     } catch (e) {
-        res.status(500).send(e)
-    }
-})
-
-router.get('/countries/:country', async (req, res) => {
-    const countryName = req.params.country
-
-    try {
-        // Here we link the existing products to the country's 'products' property according to their _ids
-        await Country.findOne({name: countryName}).populate('products').exec(function (err, country) {
-            if (err) return handleError(err);
-            if (!country) {
-                return res.status(404).send()
-            }
-            res.send(country)
-        })
-    } catch (e) {
-        console.log(e)
         res.status(500).send(e)
     }
 })

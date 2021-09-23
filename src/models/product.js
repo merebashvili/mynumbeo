@@ -29,19 +29,9 @@ const productSchema = new Schema({
     }
 })
 
-const countrySchema = new Schema({
-    "name": {
-        type: String,
-        required: true,
-        minLength: 2
-    },
-    "products": [{type: mongoose.Schema.Types.ObjectId, ref: "Product" }]
-})
+// TO DO
+// product should be unique
 
-  // TO DO
-  // product should be unique
+const Product = mongoose.model('Product', productSchema);
 
-  const Product = mongoose.model('Product', productSchema);
-  const Country = mongoose.model('Country', countrySchema);
-
-  module.exports = { Product, Country }
+module.exports = Product
