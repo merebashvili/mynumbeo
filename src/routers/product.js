@@ -1,12 +1,25 @@
 const express = require('express')
 const router = express.Router()
-const Product = require('../models/product')
+const {Product, Country} = require('../models/product')
 
 router.post('/products', async (req, res) => {
     const newProduct = new Product(req.body)
+    const productCountry = req.body.country
+    const foundCountry = await Country.findOne({name: productCountry})
 
     try {
         await newProduct.save()
+        if (!foundCountry) {
+            const newCountry = new Country({
+                name: productCountry,
+                products: [newProduct._id]
+            })
+
+            newCountry.save()
+        } else {
+            foundCountry.products.push(newProduct._id)
+            foundCountry.save()
+        }
         res.status(201).send(newProduct)
     } catch (e) {
         res.status(400).send(e)
@@ -18,6 +31,23 @@ router.get('/products', async (req, res) => {
         const products = await Product.find({})
         res.send(products)
     } catch (e) {
+        res.status(500).send(e)
+    }
+})
+
+router.get('/countries/:country', async (req, res) => {
+    const countryName = req.params.country
+
+    try {
+        await Country.findOne({name: countryName}).populate('products').exec(function (err, country) {
+            if (err) return handleError(err);
+            if (!country) {
+                return res.status(404).send()
+            }
+            res.send(country)
+        })
+    } catch (e) {
+        console.log(e)
         res.status(500).send(e)
     }
 })
