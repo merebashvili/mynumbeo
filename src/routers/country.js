@@ -2,6 +2,16 @@ const express = require('express')
 const router = express.Router()
 const Country = require('../models/country')
 
+// Get all countries along with their product ids
+router.get('/countries', async (req, res) => {
+    try {
+        const countries = await Country.find({})
+        res.send(countries)
+    } catch (e) {
+        res.status(500).send(e)
+    }
+})
+
 // Get country data by country name along with its product ids
 router.get('/countries/:country', async (req, res) => {
     const countryName = req.params.country
