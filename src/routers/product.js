@@ -3,12 +3,15 @@ const router = express.Router()
 const {Product, Country} = require('../models/product')
 
 router.post('/products', async (req, res) => {
+    // Whenever we create a new product, it checks if the product country is already created.
     const newProduct = new Product(req.body)
     const productCountry = req.body.country
     const foundCountry = await Country.findOne({name: productCountry})
 
     try {
         await newProduct.save()
+        // if our new product is from new country, it will automatically add new country to the
+        // countries collection, along with creating new product
         if (!foundCountry) {
             const newCountry = new Country({
                 name: productCountry,
@@ -17,6 +20,7 @@ router.post('/products', async (req, res) => {
 
             newCountry.save()
         } else {
+        // If the product country is already created, country's existing products will be updated
             foundCountry.products.push(newProduct._id)
             foundCountry.save()
         }
@@ -39,6 +43,7 @@ router.get('/countries/:country', async (req, res) => {
     const countryName = req.params.country
 
     try {
+        // Here we link the existing products to the country's 'products' property according to their _ids
         await Country.findOne({name: countryName}).populate('products').exec(function (err, country) {
             if (err) return handleError(err);
             if (!country) {
