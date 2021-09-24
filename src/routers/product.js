@@ -10,7 +10,6 @@ router.post('/products', async (req, res) => {
     const foundCountry = await Country.findOne({name: productCountry})
 
     try {
-        await newProduct.save()
         // if our new product is from new country, it will automatically add new country to the
         // countries collection, along with creating new product
         if (!foundCountry) {
@@ -19,12 +18,19 @@ router.post('/products', async (req, res) => {
                 products: [newProduct._id]
             })
 
-            newCountry.save()
+            // Here I reassign product country property from 'name' to country's 'ObjectId'.
+            // Why? because if let's say at some point we need to change country name, we will only need
+            // to change country name (./country.js PATCH), without changing its products' country names as well.
+            newProduct.country = newCountry._id
+            await newCountry.save()
         } else {
         // If the product country is already created, country's existing products will be updated
+
             foundCountry.products.push(newProduct._id)
-            foundCountry.save()
+            newProduct.country = foundCountry._id
+            await foundCountry.save()
         }
+        await newProduct.save()
         res.status(201).send(newProduct)
     } catch (e) {
         res.status(400).send(e)

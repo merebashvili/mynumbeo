@@ -1,3 +1,4 @@
+const { ObjectId } = require('bson');
 const mongoose = require('mongoose')
 const { Schema } = mongoose;
 
@@ -23,7 +24,7 @@ const productSchema = new Schema({
         min: 1
     },
     "country": {
-        type: String,
+        type: String || ObjectId,
         required: true,
         minLength: 2
     }
