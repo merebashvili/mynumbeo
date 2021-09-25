@@ -1,3 +1,4 @@
+const { ObjectId } = require('bson');
 const mongoose = require('mongoose')
 const { Schema } = mongoose;
 
@@ -23,25 +24,15 @@ const productSchema = new Schema({
         min: 1
     },
     "country": {
-        type: String,
+        type: String || ObjectId,
         required: true,
         minLength: 2
     }
 })
 
-const countrySchema = new Schema({
-    "name": {
-        type: String,
-        required: true,
-        minLength: 2
-    },
-    "products": [{type: mongoose.Schema.Types.ObjectId, ref: "Product" }]
-})
+// TO DO
+// product should be unique
 
-  // TO DO
-  // product should be unique
+const Product = mongoose.model('Product', productSchema);
 
-  const Product = mongoose.model('Product', productSchema);
-  const Country = mongoose.model('Country', countrySchema);
-
-  module.exports = { Product, Country }
+module.exports = Product
