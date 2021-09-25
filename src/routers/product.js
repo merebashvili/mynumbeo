@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const Product = require('../models/product')
 const Country = require('../models/country')
+const { isValidOperation } = require('../shared/shared')
 
 router.post('/products', async (req, res) => {
     // Whenever we create a new product, it checks if the product country is already created.
@@ -64,10 +65,11 @@ router.get('/products/:id', async (req, res) => {
 
 router.patch('/products/:id', async (req, res) => {
     const _id = req.params.id
+    const allowedUpdates = ['product', 'price_in_local', 'price_in_usd', 'quantity_for_month']
 
     // TO DO
     // See if there is a shorter way to validate
-    if (!isValidOperation(req.body)) {
+    if (!isValidOperation(req.body, allowedUpdates)) {
         return res.status(400).send({ error: 'Invalid updates!' })
     }
 
@@ -103,14 +105,5 @@ router.delete('/products/:id', async (req, res) => {
         res.status(500).send(e)
     }
 })
-
-/* Checks if the property we are trying to update is valid - meaning,
-if it is included inside the product schema (./models/product) I created earlier */
-const isValidOperation = (body) => {
-    const updates = Object.keys(body)
-    const allowedUpdates = ['product', 'price_in_local', 'price_in_usd', 'quantity_for_month']
-    const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
-    return isValidOperation
-}
 
 module.exports = router
