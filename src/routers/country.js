@@ -14,13 +14,13 @@ router.get('/countries', async (req, res) => {
     }
 })
 
-// Get country data by country name along with its product ids
-router.get('/countries/:country', async (req, res) => {
-    const countryName = req.params.country
+// Get country data by country id along with its product ids
+router.get('/countries/:id', async (req, res) => {
+    const countryId = req.params.id
 
     try {
         // Here we link the existing products to the country's 'products' property according to their _ids
-        Country.findOne({name: countryName}).populate('products').exec(function (err, country) {
+        Country.findOne({_id: countryId}).populate('products').exec(function (err, country) {
             if (err) return handleError(err);
             if (!country) {
                 return res.status(404).send()
