@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const Country = require('../models/country')
+const Product = require('../models/product')
 const { isValidOperation } = require('../shared/shared')
 
 // Get all countries along with their product ids
@@ -42,10 +43,8 @@ router.patch('/countries/:id', async (req, res) => {
     }
 
     try {
-        /* Without {returnOriginal: false}, productToBeUpdated will give me the old (preupdated) product.
-        Also, without {runValidators: true}, there will be no validation check,
-        e.g. I can set "quantity_for_month" to 0, even though I have set the
-        minimum quantity to 1 in product schema (./models/product) */
+        /* Without {returnOriginal: false}, countryToBeUpdated will give me the old (preupdated) country.
+        Also, without {runValidators: true}, there will be no validation check */
         const countryToBeUpdated = await Country.findByIdAndUpdate(_id, req.body, {returnOriginal: false, runValidators: true})
 
         if (!countryToBeUpdated) {
@@ -53,6 +52,24 @@ router.patch('/countries/:id', async (req, res) => {
         }
 
         res.send(countryToBeUpdated)
+    } catch (e) {
+        res.status(500).send(e)
+    }
+})
+
+router.delete('/countries/:id', async (req, res) => {
+    const _id = req.params.id
+
+    try {
+        const countryToBeDeleted = await Country.findByIdAndDelete({_id})
+
+        if (!countryToBeDeleted) {
+            return res.status(400).send()
+        }
+
+        await Product.deleteMany({country: countryToBeDeleted._id})
+
+        res.send(countryToBeDeleted)
     } catch (e) {
         res.status(500).send(e)
     }
