@@ -100,6 +100,13 @@ router.delete('/products/:id', async (req, res) => {
             return res.status(400).send()
         }
 
+        // Whenever we delete particular product, that product should also be deleted
+        // from the list of country's products, right?
+        let productCountry = await Country.findById(productToBeDeleted.country)
+        productCountry.products = productCountry.products.filter(product => !product.equals(productToBeDeleted._id))
+
+        await Country.findByIdAndUpdate(productToBeDeleted.country, productCountry)
+
         res.send(productToBeDeleted)
     } catch (e) {
         res.status(500).send(e)
