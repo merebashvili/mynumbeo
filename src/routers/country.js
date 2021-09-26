@@ -48,7 +48,7 @@ router.patch('/countries/:id', async (req, res) => {
         const countryToBeUpdated = await Country.findByIdAndUpdate(_id, req.body, {returnOriginal: false, runValidators: true})
 
         if (!countryToBeUpdated) {
-            return res.status(400).send()
+            return res.status(404).send()
         }
 
         res.send(countryToBeUpdated)
@@ -64,7 +64,7 @@ router.delete('/countries/:id', async (req, res) => {
         const countryToBeDeleted = await Country.findByIdAndDelete({_id})
 
         if (!countryToBeDeleted) {
-            return res.status(400).send()
+            return res.status(404).send()
         }
 
         await Product.deleteMany({country: countryToBeDeleted._id})
