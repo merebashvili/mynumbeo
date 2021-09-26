@@ -48,7 +48,7 @@ router.patch('/countries/:id', async (req, res) => {
         const countryToBeUpdated = await Country.findByIdAndUpdate(_id, req.body, {returnOriginal: false, runValidators: true})
 
         if (!countryToBeUpdated) {
-            return res.status(400).send()
+            return res.status(404).send()
         }
 
         res.send(countryToBeUpdated)
