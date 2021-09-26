@@ -47,15 +47,31 @@ router.patch('/users/:id', async (req, res) => {
     }
 
     try {
-        const user = await User.findByIdAndUpdate(_id, req.body, { returnOriginal: false, runValidators: true })
+        const userToBeUpdated = await User.findByIdAndUpdate(_id, req.body, { returnOriginal: false, runValidators: true })
 
-        if (!user) {
+        if (!userToBeUpdated) {
             return res.status(404).send()
         }
 
-        res.send(user)
+        res.send(userToBeUpdated)
     } catch (e) {
         res.status(400).send(e)
+    }
+})
+
+router.delete('/users/:id', async (req, res) => {
+    const _id = req.params.id
+
+    try {
+        const userToBeDeleted = await User.findByIdAndDelete(_id)
+
+        if (!userToBeDeleted) {
+            return res.status(404).send()
+        }
+
+        res.send(userToBeDeleted)
+    } catch (e) {
+        res.status(500).send()
     }
 })
 

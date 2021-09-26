@@ -81,7 +81,7 @@ router.patch('/products/:id', async (req, res) => {
         const productToBeUpdated = await Product.findByIdAndUpdate(_id, req.body, {returnOriginal: false, runValidators: true})
 
         if (!productToBeUpdated) {
-            return res.status(400).send()
+            return res.status(404).send()
         }
 
         res.send(productToBeUpdated)
@@ -97,7 +97,7 @@ router.delete('/products/:id', async (req, res) => {
         const productToBeDeleted = await Product.findByIdAndDelete({_id})
 
         if (!productToBeDeleted) {
-            return res.status(400).send()
+            return res.status(404).send()
         }
 
         // Whenever we delete particular product, that product should also be deleted
