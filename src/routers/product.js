@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const Product = require('../models/product')
 const Country = require('../models/country')
-const { isValidOperation } = require('../shared/shared')
+const { isValidOperation, updateManually } = require('../shared/shared')
 
 router.post('/products', async (req, res) => {
     // Whenever we create a new product, it checks if the product country is already created.
@@ -67,22 +67,19 @@ router.patch('/products/:id', async (req, res) => {
     const _id = req.params.id
     const allowedUpdates = ['product', 'price_in_local', 'price_in_usd', 'quantity_for_month']
 
-    // TO DO
-    // See if there is a shorter way to validate
     if (!isValidOperation(req.body, allowedUpdates)) {
         return res.status(400).send({ error: 'Invalid updates!' })
     }
 
     try {
-        /* Without {returnOriginal: false}, productToBeUpdated will give me the old (preupdated) product.
-        Also, without {runValidators: true}, there will be no validation check,
-        e.g. I can set "quantity_for_month" to 0, even though I have set the
-        minimum quantity to 1 in product schema (./models/product) */
-        const productToBeUpdated = await Product.findByIdAndUpdate(_id, req.body, {returnOriginal: false, runValidators: true})
+        let productToBeUpdated = await Product.findById(_id)
+        productToBeUpdated = await updateManually(req.body, productToBeUpdated)
 
         if (!productToBeUpdated) {
             return res.status(404).send()
         }
+
+        await productToBeUpdated.save()
 
         res.send(productToBeUpdated)
     } catch (e) {
