@@ -51,6 +51,12 @@ userSchema.statics.findByCredentials = async (email, password) => {
     return user
 }
 
+userSchema.path('email').validate(async (email) => {
+    // With this I check if email already exists
+    const emailCount = await mongoose.models.User.countDocuments({ email })
+    return !emailCount
+}, 'Email already exists')
+
 // Hashing the plain text password before saving it
 userSchema.pre('save', async function (next) {
     const user = this
