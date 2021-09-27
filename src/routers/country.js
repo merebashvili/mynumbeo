@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const Country = require('../models/country')
 const Product = require('../models/product')
-const { isValidOperation } = require('../shared/shared')
+const { isValidOperation, updateManually } = require('../shared/shared')
 
 // Get all countries along with their product ids
 router.get('/countries', async (req, res) => {
@@ -36,20 +36,19 @@ router.get('/countries/:id', async (req, res) => {
 router.patch('/countries/:id', async (req, res) => {
     const _id = req.params.id
 
-    // TO DO
-    // See if there is a shorter way to validate
     if (!isValidOperation(req.body, ['name'])) {
         return res.status(400).send({ error: 'Invalid updates!' })
     }
 
     try {
-        /* Without {returnOriginal: false}, countryToBeUpdated will give me the old (preupdated) country.
-        Also, without {runValidators: true}, there will be no validation check */
-        const countryToBeUpdated = await Country.findByIdAndUpdate(_id, req.body, {returnOriginal: false, runValidators: true})
+        let countryToBeUpdated = await Country.findById(_id)
+        countryToBeUpdated = await updateManually(req.body, countryToBeUpdated)
 
         if (!countryToBeUpdated) {
             return res.status(404).send()
         }
+
+        await countryToBeUpdated.save()
 
         res.send(countryToBeUpdated)
     } catch (e) {
