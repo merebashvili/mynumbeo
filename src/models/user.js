@@ -33,6 +33,25 @@ const userSchema = new Schema({
     }
 })
 
+userSchema.statics.findByCredentials = async (email, password) => {
+    const user = await User.findOne({ email })
+
+    if (!user) {
+        throw new Error('Unable to log in')
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password)
+
+    if (!isMatch) {
+        // It is not necessary to be too specific, like 'Email is registered but password is incorrect',
+        // as it exposes the information
+        throw new Error('Unable to log in')
+    }
+
+    return user
+}
+
+// Hashing the plain text password before saving it
 userSchema.pre('save', async function (next) {
     const user = this
 
