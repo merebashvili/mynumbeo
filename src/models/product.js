@@ -31,7 +31,7 @@ const productSchema = new Schema({
 })
 
 // TO DO
-// product should be unique
+// product names should be unique inside each country, but can be similar across different countries
 
 const Product = mongoose.model('Product', productSchema);
 
