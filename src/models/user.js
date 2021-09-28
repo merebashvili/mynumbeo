@@ -2,6 +2,7 @@ const mongoose = require('mongoose')
 const validator = require('validator')
 const { Schema } = mongoose;
 const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 
 const userSchema = new Schema({
     name: {
@@ -30,8 +31,24 @@ const userSchema = new Schema({
                 throw new Error('Password cannot contain "password"')
             }
         }
-    }
+    },
+    tokens: [{
+        token: {
+            type: String,
+            required: true
+        }
+    }]
 })
+
+userSchema.methods.generateAuthToken = async function () {
+    const user = this
+    const token = jwt.sign({ _id: user._id.toString() }, 'DkyAEgFYdk')
+
+    user.tokens = user.tokens.concat({ token })
+    await user.save()
+
+    return token
+}
 
 userSchema.statics.findByCredentials = async (email, password) => {
     const user = await User.findOne({ email })
@@ -51,11 +68,11 @@ userSchema.statics.findByCredentials = async (email, password) => {
     return user
 }
 
-userSchema.path('email').validate(async (email) => {
-    // With this I check if email already exists
-    const emailCount = await mongoose.models.User.countDocuments({ email })
-    return !emailCount
-}, 'Email already exists')
+// userSchema.path('email').validate(async (email) => {
+//     // With this I check if email already exists
+//     const emailCount = await mongoose.models.User.countDocuments({ email })
+//     return !emailCount
+// }, 'Email already exists')
 
 // Hashing the plain text password before saving it
 userSchema.pre('save', async function (next) {
