@@ -56,9 +56,7 @@ router.get('/users/me', auth, async (req, res) => {
     res.send(req.user)
 })
 
-router.patch('/users/:id', async (req, res) => {
-    const _id = req.params.id
-
+router.patch('/users/me', auth, async (req, res) => {
     if (!isValidOperation(req.body, ['name', 'email', 'password'])) {
         return res.status(400).send({ error: 'Invalid updates!' })
     }
@@ -66,7 +64,7 @@ router.patch('/users/:id', async (req, res) => {
     try {
         // Here instead of updating user simply by findByIdAndUpdate, I have to manually do the update,
         // because as findByIdAndUpdate performs a direct operation on the database, it bypasses middleware
-        let userToBeUpdated = await User.findById(_id)
+        let userToBeUpdated = req.user
         userToBeUpdated = await updateManually(req.body, userToBeUpdated)
 
         if (!userToBeUpdated) {
