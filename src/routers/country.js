@@ -2,25 +2,13 @@ const express = require('express')
 const router = express.Router()
 const Country = require('../models/country')
 const Product = require('../models/product')
+const auth = require('../middleware/auth')
 const { isValidOperation, updateManually } = require('../shared/shared')
 
 // Get all countries along with their product ids
-router.get('/countries', async (req, res) => {
+router.get('/countries', auth, async (req, res) => {
     try {
-        const countries = await Country.find({})
-        res.send(countries)
-    } catch (e) {
-        res.status(500).send(e)
-    }
-})
-
-// Get country data by country id along with its product ids
-router.get('/countries/:id', async (req, res) => {
-    const countryId = req.params.id
-
-    try {
-        // Here we link the existing products to the country's 'products' property according to their _ids
-        Country.findOne({_id: countryId}).populate('products').exec(function (err, country) {
+        Country.find({ owner: req.user._id }).populate('products').exec(function (err, country) {
             if (err) return handleError(err);
             if (!country) {
                 return res.status(404).send()
@@ -28,12 +16,31 @@ router.get('/countries/:id', async (req, res) => {
             res.send(country)
         })
     } catch (e) {
-        console.log(e)
         res.status(500).send(e)
     }
 })
 
-router.patch('/countries/:id', async (req, res) => {
+// Get country data by country id along with its product ids
+router.get('/countries/:id', auth, async (req, res) => {
+    const owner = req.user._id
+    const countryId = req.params.id
+
+    try {
+        // Here we link the existing products to the country's 'products' property according to their _ids
+        Country.findOne({_id: countryId, owner}).populate('products').exec(function (err, country) {
+            if (err) return handleError(err);
+            if (!country) {
+                return res.status(404).send()
+            }
+            res.send(country)
+        })
+    } catch (e) {
+        res.status(500).send(e)
+    }
+})
+
+router.patch('/countries/:id', auth, async (req, res) => {
+    const owner = req.user._id
     const _id = req.params.id
 
     if (!isValidOperation(req.body, ['name'])) {
@@ -41,7 +48,7 @@ router.patch('/countries/:id', async (req, res) => {
     }
 
     try {
-        let countryToBeUpdated = await Country.findById(_id)
+        let countryToBeUpdated = await Country.findOne({_id, owner})
         countryToBeUpdated = await updateManually(req.body, countryToBeUpdated)
 
         if (!countryToBeUpdated) {
@@ -56,11 +63,12 @@ router.patch('/countries/:id', async (req, res) => {
     }
 })
 
-router.delete('/countries/:id', async (req, res) => {
+router.delete('/countries/:id', auth, async (req, res) => {
+    const owner = req.user._id
     const _id = req.params.id
 
     try {
-        const countryToBeDeleted = await Country.findByIdAndDelete({_id})
+        const countryToBeDeleted = await Country.findOneAndDelete({_id, owner})
 
         if (!countryToBeDeleted) {
             return res.status(404).send()

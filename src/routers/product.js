@@ -2,13 +2,15 @@ const express = require('express')
 const router = express.Router()
 const Product = require('../models/product')
 const Country = require('../models/country')
+const auth = require('../middleware/auth')
 const { isValidOperation, updateManually } = require('../shared/shared')
 
-router.post('/products', async (req, res) => {
+router.post('/products', auth, async (req, res) => {
+    const owner = req.user._id
     // Whenever we create a new product, it checks if the product country is already created.
     const newProduct = new Product(req.body)
     const productCountry = req.body.country
-    const foundCountry = await Country.findOne({name: productCountry})
+    const foundCountry = await Country.findOne({name: productCountry, owner})
 
     try {
         // if our new product is from new country, it will automatically add new country to the
@@ -16,7 +18,8 @@ router.post('/products', async (req, res) => {
         if (!foundCountry) {
             const newCountry = new Country({
                 name: productCountry,
-                products: [newProduct._id]
+                products: [newProduct._id],
+                owner
             })
 
             // Here I reassign product country property from 'name' to country's 'ObjectId'.
@@ -38,6 +41,7 @@ router.post('/products', async (req, res) => {
     }
 })
 
+// TO DO: non-owner shouldn't be able to edit other product
 router.get('/products', async (req, res) => {
     try {
         const products = await Product.find({})
@@ -47,6 +51,7 @@ router.get('/products', async (req, res) => {
     }
 })
 
+// TO DO: non-owner shouldn't be able to edit other product
 router.get('/products/:id', async (req, res) => {
     const _id = req.params.id
 
@@ -63,6 +68,7 @@ router.get('/products/:id', async (req, res) => {
     }
 })
 
+// TO DO: non-owner shouldn't be able to edit other product
 router.patch('/products/:id', async (req, res) => {
     const _id = req.params.id
     const allowedUpdates = ['product', 'price_in_local', 'price_in_usd', 'quantity_for_month']
@@ -87,12 +93,12 @@ router.patch('/products/:id', async (req, res) => {
     }
 })
 
+// TO DO: non-owner shouldn't be able to edit other product
 router.delete('/products/:id', async (req, res) => {
     const _id = req.params.id
 
     try {
         const productToBeDeleted = await Product.findByIdAndDelete({_id})
-
         if (!productToBeDeleted) {
             return res.status(404).send()
         }
