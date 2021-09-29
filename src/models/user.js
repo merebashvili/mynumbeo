@@ -40,6 +40,26 @@ const userSchema = new Schema({
     }]
 })
 
+
+// JSON.stringify() is called when we pass an object
+// to response.send(), So whenever we call JSON.stringify() on an object, the
+// toJSON method on that object (if there is one) gets called.
+// I use this behavior to hide the properties I want to hide. In this case
+// I hide password and tokens as it is not necessary for the user to see it in response.
+userSchema.methods.toJSON = function () {
+    const user = this
+    // toObject method is a method provided by Mongoose to clean up
+    // the object so it removes all of the metadata and methods
+    // (like .save() or .toObject()) that Mongoose attaches to it.
+    // It just becomes a regular object afterward.
+    const userObject = user.toObject()
+
+    delete userObject.password
+    delete userObject.tokens
+
+    return userObject
+}
+
 userSchema.methods.generateAuthToken = async function () {
     const user = this
     const token = jwt.sign({ _id: user._id.toString() }, 'DkyAEgFYdk')
