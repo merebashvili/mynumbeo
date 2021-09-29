@@ -27,7 +27,8 @@ const productSchema = new Schema({
         type: String || ObjectId,
         required: true,
         minLength: 2
-    }
+    },
+    "owner": {type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User'}
 })
 
 // TO DO

@@ -7,6 +7,7 @@ const { isValidOperation, updateManually } = require('../shared/shared')
 
 router.post('/products', auth, async (req, res) => {
     const owner = req.user._id
+    req.body.owner = owner
     // Whenever we create a new product, it checks if the product country is already created.
     const newProduct = new Product(req.body)
     const productCountry = req.body.country
@@ -41,22 +42,22 @@ router.post('/products', auth, async (req, res) => {
     }
 })
 
-// TO DO: non-owner shouldn't be able to edit other product
-router.get('/products', async (req, res) => {
+router.get('/products/me', auth, async (req, res) => {
+    const owner = req.user._id
     try {
-        const products = await Product.find({})
+        const products = await Product.find({owner})
         res.send(products)
     } catch (e) {
         res.status(500).send(e)
     }
 })
 
-// TO DO: non-owner shouldn't be able to edit other product
-router.get('/products/:id', async (req, res) => {
+router.get('/products/:id', auth, async (req, res) => {
     const _id = req.params.id
+    const owner = req.user._id
 
     try {
-        const foundProduct = await Product.findById(_id)
+        const foundProduct = await Product.findOne({_id, owner})
 
         if (!foundProduct) {
             return res.status(404).send()
@@ -68,9 +69,9 @@ router.get('/products/:id', async (req, res) => {
     }
 })
 
-// TO DO: non-owner shouldn't be able to edit other product
-router.patch('/products/:id', async (req, res) => {
+router.patch('/products/:id', auth, async (req, res) => {
     const _id = req.params.id
+    const owner = req.user._id
     const allowedUpdates = ['product', 'price_in_local', 'price_in_usd', 'quantity_for_month']
 
     if (!isValidOperation(req.body, allowedUpdates)) {
@@ -78,7 +79,7 @@ router.patch('/products/:id', async (req, res) => {
     }
 
     try {
-        let productToBeUpdated = await Product.findById(_id)
+        let productToBeUpdated = await Product.findOne({_id, owner})
         productToBeUpdated = await updateManually(req.body, productToBeUpdated)
 
         if (!productToBeUpdated) {
@@ -93,12 +94,12 @@ router.patch('/products/:id', async (req, res) => {
     }
 })
 
-// TO DO: non-owner shouldn't be able to edit other product
-router.delete('/products/:id', async (req, res) => {
+router.delete('/products/:id', auth, async (req, res) => {
     const _id = req.params.id
+    const owner = req.user._id
 
     try {
-        const productToBeDeleted = await Product.findByIdAndDelete({_id})
+        const productToBeDeleted = await Product.findOneAndDelete({_id, owner})
         if (!productToBeDeleted) {
             return res.status(404).send()
         }
