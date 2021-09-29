@@ -2,6 +2,7 @@ const mongoose = require('mongoose')
 const validator = require('validator')
 const { Schema } = mongoose;
 const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 
 const userSchema = new Schema({
     name: {
@@ -30,8 +31,44 @@ const userSchema = new Schema({
                 throw new Error('Password cannot contain "password"')
             }
         }
-    }
+    },
+    tokens: [{
+        token: {
+            type: String,
+            required: true
+        }
+    }]
 })
+
+
+// JSON.stringify() is called when we pass an object
+// to response.send(), So whenever we call JSON.stringify() on an object, the
+// toJSON method on that object (if there is one) gets called.
+// I use this behavior to hide the properties I want to hide. In this case
+// I hide password and tokens as it is not necessary for the user to see it in response.
+userSchema.methods.toJSON = function () {
+    const user = this
+    // toObject method is a method provided by Mongoose to clean up
+    // the object so it removes all of the metadata and methods
+    // (like .save() or .toObject()) that Mongoose attaches to it.
+    // It just becomes a regular object afterward.
+    const userObject = user.toObject()
+
+    delete userObject.password
+    delete userObject.tokens
+
+    return userObject
+}
+
+userSchema.methods.generateAuthToken = async function () {
+    const user = this
+    const token = jwt.sign({ _id: user._id.toString() }, 'DkyAEgFYdk')
+
+    user.tokens = user.tokens.concat({ token })
+    await user.save()
+
+    return token
+}
 
 userSchema.statics.findByCredentials = async (email, password) => {
     const user = await User.findOne({ email })
@@ -51,11 +88,11 @@ userSchema.statics.findByCredentials = async (email, password) => {
     return user
 }
 
-userSchema.path('email').validate(async (email) => {
-    // With this I check if email already exists
-    const emailCount = await mongoose.models.User.countDocuments({ email })
-    return !emailCount
-}, 'Email already exists')
+// userSchema.path('email').validate(async (email) => {
+//     // With this I check if email already exists
+//     const emailCount = await mongoose.models.User.countDocuments({ email })
+//     return !emailCount
+// }, 'Email already exists')
 
 // Hashing the plain text password before saving it
 userSchema.pre('save', async function (next) {
