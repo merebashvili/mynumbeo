@@ -3,5 +3,5 @@ const mongoose = require('mongoose')
 main().catch(err => console.log(err));
 
 async function main() {
-  await mongoose.connect('mongodb://localhost:27017/mynumbeo');
+  await mongoose.connect(process.env.MONGODB_URL);
 }
