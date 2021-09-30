@@ -3,6 +3,8 @@ const validator = require('validator')
 const { Schema } = mongoose;
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const Country = require('./country')
+const Product = require('./product')
 
 const userSchema = new Schema({
     name: {
@@ -102,6 +104,14 @@ userSchema.pre('save', async function (next) {
         user.password = await bcrypt.hash(user.password, 8)
     }
 
+    next()
+})
+
+// Delete user countries along with their products when user is removed
+userSchema.pre('remove', async function (next) {
+    const user = this
+    await Country.deleteMany({ owner: user._id })
+    await Product.deleteMany({ owner: user._id })
     next()
 })
 
