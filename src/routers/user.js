@@ -3,6 +3,7 @@ const router = express.Router()
 const auth = require('../middleware/auth')
 const User = require('../models/user')
 const { isValidOperation, updateManually } = require('../shared/shared')
+const { sendWelcomeEmail, sendAccountRemovalEmail } = require('../emails/account')
 
 router.post('/users', async (req, res) => {
     const user = new User(req.body)
@@ -10,6 +11,7 @@ router.post('/users', async (req, res) => {
 
     try {
         await user.save()
+        sendWelcomeEmail(user.email, user.name)
         res.status(201).send({user, token})
     } catch (e) {
         res.status(400).send(e)
@@ -84,6 +86,7 @@ router.delete('/users/me', auth, async (req, res) => {
         const userToBeDeleted = req.user
 
         await userToBeDeleted.remove()
+        sendAccountRemovalEmail(userToBeDeleted.email, userToBeDeleted.name)
 
         res.send(userToBeDeleted)
     } catch (e) {
