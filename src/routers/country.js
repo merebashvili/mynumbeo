@@ -68,13 +68,13 @@ router.delete('/countries/:id', auth, async (req, res) => {
     const _id = req.params.id
 
     try {
-        const countryToBeDeleted = await Country.findOneAndDelete({_id, owner})
+        const countryToBeDeleted = await Country.findOne({_id, owner})
 
         if (!countryToBeDeleted) {
             return res.status(404).send()
         }
 
-        await Product.deleteMany({country: countryToBeDeleted._id, owner})
+        await countryToBeDeleted.remove()
 
         res.send(countryToBeDeleted)
     } catch (e) {
