@@ -2,13 +2,16 @@ const express = require('express')
 const router = express.Router()
 const Product = require('../models/product')
 const Country = require('../models/country')
+const auth = require('../middleware/auth')
 const { isValidOperation, updateManually } = require('../shared/shared')
 
-router.post('/products', async (req, res) => {
+router.post('/products', auth, async (req, res) => {
+    const owner = req.user._id
+    req.body.owner = owner
     // Whenever we create a new product, it checks if the product country is already created.
     const newProduct = new Product(req.body)
     const productCountry = req.body.country
-    const foundCountry = await Country.findOne({name: productCountry})
+    const foundCountry = await Country.findOne({name: productCountry, owner})
 
     try {
         // if our new product is from new country, it will automatically add new country to the
@@ -16,7 +19,8 @@ router.post('/products', async (req, res) => {
         if (!foundCountry) {
             const newCountry = new Country({
                 name: productCountry,
-                products: [newProduct._id]
+                products: [newProduct._id],
+                owner
             })
 
             // Here I reassign product country property from 'name' to country's 'ObjectId'.
@@ -38,20 +42,22 @@ router.post('/products', async (req, res) => {
     }
 })
 
-router.get('/products', async (req, res) => {
+router.get('/products/me', auth, async (req, res) => {
+    const owner = req.user._id
     try {
-        const products = await Product.find({})
+        const products = await Product.find({owner})
         res.send(products)
     } catch (e) {
         res.status(500).send(e)
     }
 })
 
-router.get('/products/:id', async (req, res) => {
+router.get('/products/:id', auth, async (req, res) => {
     const _id = req.params.id
+    const owner = req.user._id
 
     try {
-        const foundProduct = await Product.findById(_id)
+        const foundProduct = await Product.findOne({_id, owner})
 
         if (!foundProduct) {
             return res.status(404).send()
@@ -63,8 +69,9 @@ router.get('/products/:id', async (req, res) => {
     }
 })
 
-router.patch('/products/:id', async (req, res) => {
+router.patch('/products/:id', auth, async (req, res) => {
     const _id = req.params.id
+    const owner = req.user._id
     const allowedUpdates = ['product', 'price_in_local', 'price_in_usd', 'quantity_for_month']
 
     if (!isValidOperation(req.body, allowedUpdates)) {
@@ -72,7 +79,7 @@ router.patch('/products/:id', async (req, res) => {
     }
 
     try {
-        let productToBeUpdated = await Product.findById(_id)
+        let productToBeUpdated = await Product.findOne({_id, owner})
         productToBeUpdated = await updateManually(req.body, productToBeUpdated)
 
         if (!productToBeUpdated) {
@@ -87,12 +94,12 @@ router.patch('/products/:id', async (req, res) => {
     }
 })
 
-router.delete('/products/:id', async (req, res) => {
+router.delete('/products/:id', auth, async (req, res) => {
     const _id = req.params.id
+    const owner = req.user._id
 
     try {
-        const productToBeDeleted = await Product.findByIdAndDelete({_id})
-
+        const productToBeDeleted = await Product.findOneAndDelete({_id, owner})
         if (!productToBeDeleted) {
             return res.status(404).send()
         }
