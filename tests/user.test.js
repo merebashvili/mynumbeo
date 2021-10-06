@@ -32,8 +32,18 @@ test('Should log in existing user', async () => {
   await request(app)
     .post('/users/login')
     .send({
-      email: 'exampleName@example.com',
-      password: 'blabla12bla',
+      email: testUser.email,
+      password: testUser.password,
     })
     .expect(200);
+});
+
+test('Should NOT log in non-existent user', async () => {
+  await request(app)
+    .post('/users/login')
+    .send({
+      email: testUser.email,
+      password: 'Nonexistent144',
+    })
+    .expect(400);
 });
