@@ -1,97 +1,103 @@
-const express = require('express')
-const router = express.Router()
-const auth = require('../middleware/auth')
-const User = require('../models/user')
-const { isValidOperation, updateManually } = require('../shared/shared')
-const { sendWelcomeEmail, sendAccountRemovalEmail } = require('../emails/account')
+const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
+const User = require('../models/user');
+const { isValidOperation, updateManually } = require('../shared/shared');
+const {
+  sendWelcomeEmail,
+  sendAccountRemovalEmail,
+} = require('../emails/account');
 
 router.post('/users', async (req, res) => {
-    const user = new User(req.body)
-    const token = await user.generateAuthToken()
+  const user = new User(req.body);
+  const token = await user.generateAuthToken();
 
-    try {
-        await user.save()
-        sendWelcomeEmail(user.email, user.name)
-        res.status(201).send({user, token})
-    } catch (e) {
-        res.status(400).send(e)
-    }
-})
+  try {
+    await user.save();
+    sendWelcomeEmail(user.email, user.name);
+    res.status(201).send({ user, token });
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
 
 router.post('/users/logout', auth, async (req, res) => {
-    try {
-        req.user.tokens = req.user.tokens.filter((token) => {
-            return token.token !== req.token
-        })
-        await req.user.save()
+  try {
+    req.user.tokens = req.user.tokens.filter((token) => {
+      return token.token !== req.token;
+    });
+    await req.user.save();
 
-        res.send()
-    } catch (e) {
-        res.status(500).send()
-    }
-})
+    res.send();
+  } catch (e) {
+    res.status(500).send();
+  }
+});
 
 router.post('/users/logoutAll', auth, async (req, res) => {
-    try {
-        req.user.tokens = [];
-        await req.user.save()
+  try {
+    req.user.tokens = [];
+    await req.user.save();
 
-        res.send()
-    } catch (e) {
-        res.status(500).send()
-    }
-})
+    res.send();
+  } catch (e) {
+    res.status(500).send();
+  }
+});
 
 router.post('/users/login', async (req, res) => {
-    try {
-        const user = await User.findByCredentials(req.body.email, req.body.password)
-        const token = await user.generateAuthToken()
-        res.send({ user, token })
-    } catch (e) {
-        res.status(400).send()
-    }
-})
+  try {
+    const user = await User.findByCredentials(
+      req.body.email,
+      req.body.password
+    );
+    const token = await user.generateAuthToken();
+    res.send({ user, token });
+  } catch (e) {
+    res.status(400).send();
+  }
+});
 
 router.get('/users/me', auth, async (req, res) => {
-    // This function is only going to run if the user is authenticated (auth middleware is doing the job),
-    // which means we only need to send the response
-    res.send(req.user)
-})
+  // This function is only going to run if the user is authenticated (auth middleware is doing the job),
+  // which means we only need to send the response
+  res.send(req.user);
+});
 
 router.patch('/users/me', auth, async (req, res) => {
-    if (!isValidOperation(req.body, ['name', 'email', 'password'])) {
-        return res.status(400).send({ error: 'Invalid updates!' })
+  if (!isValidOperation(req.body, ['name', 'email', 'password'])) {
+    return res.status(400).send({ error: 'Invalid updates!' });
+  }
+
+  try {
+    // Here instead of updating user simply by findByIdAndUpdate, I have to manually do the update,
+    // because as findByIdAndUpdate performs a direct operation on the database, it bypasses middleware
+    let userToBeUpdated = req.user;
+    userToBeUpdated = await updateManually(req.body, userToBeUpdated);
+
+    if (!userToBeUpdated) {
+      return res.status(404).send();
     }
 
-    try {
-        // Here instead of updating user simply by findByIdAndUpdate, I have to manually do the update,
-        // because as findByIdAndUpdate performs a direct operation on the database, it bypasses middleware
-        let userToBeUpdated = req.user
-        userToBeUpdated = await updateManually(req.body, userToBeUpdated)
+    await userToBeUpdated.save();
 
-        if (!userToBeUpdated) {
-            return res.status(404).send()
-        }
-
-        await userToBeUpdated.save()
-
-        res.send(userToBeUpdated)
-    } catch (e) {
-        res.status(400).send(e)
-    }
-})
+    res.send(userToBeUpdated);
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
 
 router.delete('/users/me', auth, async (req, res) => {
-    try {
-        const userToBeDeleted = req.user
+  try {
+    const userToBeDeleted = req.user;
 
-        await userToBeDeleted.remove()
-        sendAccountRemovalEmail(userToBeDeleted.email, userToBeDeleted.name)
+    await userToBeDeleted.remove();
+    sendAccountRemovalEmail(userToBeDeleted.email, userToBeDeleted.name);
 
-        res.send(userToBeDeleted)
-    } catch (e) {
-        res.status(500).send()
-    }
-})
+    res.send(userToBeDeleted);
+  } catch (e) {
+    res.status(500).send();
+  }
+});
 
-module.exports = router
+module.exports = router;
