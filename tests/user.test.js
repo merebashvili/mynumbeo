@@ -1,11 +1,20 @@
 const request = require('supertest');
+const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const app = require('../src/app');
 const User = require('../src/models/user');
 
+const testUserId = new mongoose.Types.ObjectId();
 const testUser = {
+  _id: testUserId,
   name: 'exampleName',
   email: 'exampleName@example.com',
   password: 'blabla12bla',
+  tokens: [
+    {
+      token: jwt.sign({ _id: testUserId }, process.env.JWT_SECRET),
+    },
+  ],
 };
 
 // making sure that every test that runs, runs in the same environment,
@@ -46,4 +55,16 @@ test('Should NOT log in non-existent user', async () => {
       password: 'Nonexistent144',
     })
     .expect(400);
+});
+
+test('Should get profile for user', async () => {
+  await request(app)
+    .get('/users/me')
+    .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+    .send({ testUser })
+    .expect(200);
+});
+
+test('Should NOT get profile for unauthenticated user', async () => {
+  await request(app).get('/users/me').send().expect(401);
 });
