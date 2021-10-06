@@ -61,10 +61,22 @@ test('Should get profile for user', async () => {
   await request(app)
     .get('/users/me')
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
-    .send({ testUser })
+    .send()
     .expect(200);
 });
 
 test('Should NOT get profile for unauthenticated user', async () => {
   await request(app).get('/users/me').send().expect(401);
+});
+
+test('Should delete account for user', async () => {
+  await request(app)
+    .delete('/users/me')
+    .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+    .send()
+    .expect(200);
+});
+
+test('Should NOT delete account for unauthenticated user', async () => {
+  await request(app).delete('/users/me').send().expect(401);
 });
