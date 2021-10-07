@@ -80,3 +80,24 @@ test('Should delete account for user', async () => {
 test('Should NOT delete account for unauthenticated user', async () => {
   await request(app).delete('/users/me').send().expect(401);
 });
+
+test('Should update valid user fields', async () => {
+  const testName = 'testName';
+  const testMail = 'testEmail@test.ge';
+  await request(app)
+    .patch('/users/me')
+    .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+    .send({ name: testName, email: testMail })
+    .expect(200);
+
+  const user = await User.findById(testUserId);
+  expect(user.name).toBe(testName);
+});
+
+test('Should NOT update invalid user fields', async () => {
+  await request(app)
+    .patch('/users/me')
+    .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+    .send({ name: 'testName', _id: 'ks32jf243lsfl34wje4f' })
+    .expect(400);
+});
