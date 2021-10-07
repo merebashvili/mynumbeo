@@ -27,7 +27,7 @@ const testCountry = {
 };
 
 const testProduct = {
-  _id: new mongoose.Types.ObjectId(),
+  _id: testProductId,
   product: 'testProductName',
   price_in_local: 15,
   price_in_usd: 5,
@@ -51,5 +51,7 @@ const setupDatabase = async () => {
 module.exports = {
   testUserId,
   testUser,
+  testCountry,
+  testProduct,
   setupDatabase,
 };
