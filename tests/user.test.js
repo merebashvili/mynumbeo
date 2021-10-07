@@ -1,29 +1,12 @@
 const request = require('supertest');
-const jwt = require('jsonwebtoken');
-const mongoose = require('mongoose');
 const app = require('../src/app');
 const User = require('../src/models/user');
-
-const testUserId = new mongoose.Types.ObjectId();
-const testUser = {
-  _id: testUserId,
-  name: 'exampleName',
-  email: 'exampleName@example.com',
-  password: 'blabla12bla',
-  tokens: [
-    {
-      token: jwt.sign({ _id: testUserId }, process.env.JWT_SECRET),
-    },
-  ],
-};
+const { testUserId, testUser, setupDatabase } = require('./db');
 
 // making sure that every test that runs, runs in the same environment,
 // with the same test data in the database
 beforeEach(async () => {
-  //delete every user in the database
-  await User.deleteMany();
-  //start with one user for testing other endpoints like login
-  await new User(testUser).save();
+  await setupDatabase();
 });
 
 test('Should signup a new user', async () => {
