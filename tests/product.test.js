@@ -75,3 +75,68 @@ test('Should create new product with existing country', async () => {
   expect(existingCountry).not.toBeNull();
   expect(existingCountry.products[1]).toEqual(testProduct._id);
 });
+
+test("Should get user's own product list", async () => {
+  const response = await request(app)
+    .get('/products/me')
+    .set('Authorization', `Bearer ${testUserOne.tokens[0].token}`)
+    .send()
+    .expect(200);
+
+  const products = response.body;
+  expect(products[0]._id).toEqual(testProductOne._id.toString());
+});
+
+test('Should NOT get product list while unauthorized', async () => {
+  await request(app).get('/products/me').send().expect(401);
+});
+
+test('Should update product by id', async () => {
+  await request(app)
+    .patch(`/products/${testProductOne._id}`)
+    .set('Authorization', `Bearer ${testUserOne.tokens[0].token}`)
+    .send({ price_in_local: 45, quantity_for_month: 10 })
+    .expect(200);
+
+  // Assert that products's properties is really changed
+  const updatedProduct = await Product.findById(testProductOne._id);
+  expect(updatedProduct.price_in_local).toBe(45);
+});
+
+test("Should NOT update other user's product by id", async () => {
+  await request(app)
+    .patch(`/countries/${testProductTwo._id}`)
+    .set('Authorization', `Bearer ${testUserOne.tokens[0].token}`)
+    .send({ price_in_local: 45 })
+    .expect(400);
+
+  //Instead of 404, we expect to receive 400 because in '../src/routers/product'
+  //we perform updating manually, and that's what causes 400 error if invalid product
+  //id is provided
+});
+
+test('Should delete product by id', async () => {
+  await request(app)
+    .delete(`/products/${testProductOne._id}`)
+    .set('Authorization', `Bearer ${testUserOne.tokens[0].token}`)
+    .send()
+    .expect(200);
+
+  const deletedProduct = await Product.findById(testProductOne._id);
+  expect(deletedProduct).toBeNull();
+
+  // This is very important assertion!
+  // if one's product is deleted, this product's id within that country
+  // should also be deleted from list of products
+
+  const deletedProductCountry = await Country.findById(testCountryOne);
+  expect(deletedProductCountry.products).toHaveLength(0);
+});
+
+test("Should NOT delete other user's product", async () => {
+  await request(app)
+    .delete(`/products/${testProductTwo._id}`)
+    .set('Authorization', `Bearer ${testUserOne.tokens[0].token}`)
+    .send()
+    .expect(404);
+});

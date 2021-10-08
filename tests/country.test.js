@@ -101,7 +101,8 @@ test('Should delete country by id', async () => {
 
 test("Should NOT delete other user's country", async () => {
   await request(app)
-    .delete(`/country/${testCountryTwo._id}`)
+    .delete(`/countries/${testCountryTwo._id}`)
+    .set('Authorization', `Bearer ${testUserOne.tokens[0].token}`)
     .send()
     .expect(404);
 });
