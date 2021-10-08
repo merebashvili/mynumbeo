@@ -55,3 +55,27 @@ test("Should NOT get other user's country by id", async () => {
   const countryTwo = await Country.findById(testCountryTwo._id);
   expect(countryTwo).not.toBeNull();
 });
+
+test('Should update country by id', async () => {
+  await request(app)
+    .patch(`/countries/${testCountryOne._id}`)
+    .set('Authorization', `Bearer ${testUserOne.tokens[0].token}`)
+    .send({ name: 'Turkey' })
+    .expect(200);
+
+  // Assert that country's name is really changed to Turkey
+  const updatedCountry = await Country.findById(testCountryOne._id);
+  expect(updatedCountry.name).toBe('Turkey');
+});
+
+test("Should NOT update other user's country by id", async () => {
+  await request(app)
+    .patch(`/countries/${testCountryTwo._id}`)
+    .set('Authorization', `Bearer ${testUserOne.tokens[0].token}`)
+    .send({ name: 'Turkey' })
+    .expect(400);
+
+  //Instead of 404, we expect to receive 400 because in '../src/routers/country'
+  //we perform updating manually, and that's what causes 400 error if invalid country
+  //id is provided
+});
