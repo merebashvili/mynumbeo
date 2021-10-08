@@ -1,6 +1,7 @@
 const request = require('supertest');
 const app = require('../src/app');
 const Country = require('../src/models/country');
+const Product = require('../src/models/product');
 const {
   testUserOne,
   testCountryOne,
@@ -78,4 +79,29 @@ test("Should NOT update other user's country by id", async () => {
   //Instead of 404, we expect to receive 400 because in '../src/routers/country'
   //we perform updating manually, and that's what causes 400 error if invalid country
   //id is provided
+});
+
+test('Should delete country by id', async () => {
+  await request(app)
+    .delete(`/countries/${testCountryOne._id}`)
+    .set('Authorization', `Bearer ${testUserOne.tokens[0].token}`)
+    .send()
+    .expect(200);
+
+  const deletedCountry = await Country.findById(testCountryOne._id);
+  expect(deletedCountry).toBeNull();
+
+  // This is very important assertion!
+  // if one's country is deleted, it's own products within that country
+  // should also be deleted
+
+  const productByDeletedCountry = await Product.findById(testProductOne);
+  expect(productByDeletedCountry).toBeNull();
+});
+
+test("Should NOT delete other user's country", async () => {
+  await request(app)
+    .delete(`/country/${testCountryTwo._id}`)
+    .send()
+    .expect(404);
 });
