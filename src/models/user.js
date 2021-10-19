@@ -33,10 +33,6 @@ const userSchema = new Schema({
         throw new Error('Password cannot contain "password"');
       }
     },
-    match: [
-      /^(?=.*?[a-z])(?=.*?[0-9])/,
-      'Must contain at least one English letter & at least one digit',
-    ],
   },
   tokens: [
     {
